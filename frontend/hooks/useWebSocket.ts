@@ -33,19 +33,68 @@ export const useWebSocket = (sessionId: string): UseWebSocketReturn => {
   const manualCloseRef = useRef(false);
 
   const buildUrl = () => {
-    if (typeof window !== 'undefined' && (window as any).NEXT_PUBLIC_WS_URL) {
-      return `${(window as any).NEXT_PUBLIC_WS_URL}/ws/${sessionId}`;
+    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_WS_URL) {
+      return `${process.env.NEXT_PUBLIC_WS_URL}/ws/${sessionId}`;
     }
     return process.env.NODE_ENV === 'production'
-      ? `wss://your-backend.vercel.app/ws/${sessionId}`
+      ? `wss://${window.location.host}/api/ws/${sessionId}`
       : `ws://localhost:8000/ws/${sessionId}`;
+  };
+
+  const getApiUrl = () => {
+    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
+    return process.env.NODE_ENV === 'production'
+      ? `/api`
+      : `http://localhost:8000`;
   };
 
   const healthCheck = async () => {
     try {
-      const res = await fetch('http://localhost:8000/health', { method: 'GET' });
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/health`, { method: 'GET' });
       return res.ok;
     } catch {
+      return false;
+    }
+  };
+
+  // REST API fallback for serverless environments
+  const sendMessageViaRest = async (message: string) => {
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Process responses
+      if (data.responses && Array.isArray(data.responses)) {
+        data.responses.forEach((resp: any) => {
+          const agentMessage: AgentMessage = {
+            type: 'agent_response',
+            agent: resp.agent,
+            message: resp.message,
+            timestamp: resp.timestamp || new Date().toISOString()
+          };
+          setMessages(prev => [...prev, agentMessage]);
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('REST API error:', error);
+      setLastError(`API Error: ${error}`);
       return false;
     }
   };
@@ -180,33 +229,44 @@ export const useWebSocket = (sessionId: string): UseWebSocketReturn => {
     };
   }, [sessionId]);
 
-  const sendMessage = useCallback((request: string, context: any = {}, agents: string[] = []) => {
+  const sendMessage = useCallback(async (request: string, context: any = {}, agents: string[] = []) => {
+    // Include uploaded files from context if they exist
+    const uploadedFiles = context.uploadedFiles || [];
+    
+    // First add the user message to the messages array
+    const userMessage: AgentMessage = {
+      agent: 'user',
+      message: request,
+      timestamp: new Date().toISOString(),
+      type: 'user_message',
+      context: context,
+      uploadedFiles: uploadedFiles
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Try WebSocket first, fallback to REST API
     if (ws.current?.readyState === WebSocket.OPEN) {
-      // Include uploaded files from context if they exist
-      const uploadedFiles = context.uploadedFiles || [];
-      
-      // First add the user message to the messages array
-      const userMessage: AgentMessage = {
-        agent: 'user',
-        message: request,
-        timestamp: new Date().toISOString(),
-        type: 'user_message',
-        context: context,
-        uploadedFiles: uploadedFiles
-      };
-      
-      setMessages(prev => [...prev, userMessage]);
-      
-      // Then send to WebSocket
-      ws.current.send(JSON.stringify({
-        request,
-        context,
-        requested_agents: agents,
-        uploaded_files: uploadedFiles,
-        history: messages.slice(-10)
-      }));
+      try {
+        ws.current.send(JSON.stringify({
+          type: 'user_message',
+          message: request,
+          context,
+          requested_agents: agents,
+          uploaded_files: uploadedFiles,
+          history: messages.slice(-10)
+        }));
+      } catch (error) {
+        console.error('WebSocket send error:', error);
+        // Fallback to REST API
+        await sendMessageViaRest(request);
+      }
     } else {
-      setLastError('Cannot send message: socket not open');
+      // WebSocket not available, use REST API
+      const success = await sendMessageViaRest(request);
+      if (!success) {
+        setLastError('Cannot send message: both WebSocket and REST API failed');
+      }
     }
   }, [messages]);
 

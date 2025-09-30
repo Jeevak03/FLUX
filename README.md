@@ -219,14 +219,31 @@ AGENTS = {
 
 ## 🚀 Deployment
 
-### Production Backend
+### ⚡ Vercel Deployment (Recommended)
+
+The easiest way to deploy FLUX is using Vercel's serverless platform:
+
+1. **Quick Deploy**:
+   - Connect your GitHub repository to [Vercel](https://vercel.com)
+   - Set `GROQ_API_KEY` environment variable
+   - Deploy with one click
+
+2. **Auto-scaling**: Handles traffic spikes automatically
+3. **Global CDN**: Fast worldwide access
+4. **Zero Config**: Works out of the box
+
+📖 **[Full Vercel Deployment Guide](VERCEL_DEPLOYMENT.md)**
+
+### Traditional Server Deployment
+
+#### Production Backend
 ```bash
 cd backend
 pip install gunicorn
 gunicorn main_minimal:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 ```
 
-### Production Frontend
+#### Production Frontend
 ```bash
 cd frontend
 npm run build
