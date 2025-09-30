@@ -4,19 +4,19 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/working"
+      "destination": "/api/"
     },
     {
       "source": "/health",
-      "destination": "/api/working"
+      "destination": "/api/"
     },
     {
-      "source": "/chat",
-      "destination": "/api/working"
+      "source": "/chat", 
+      "destination": "/api/"
     },
     {
       "source": "/agents",
-      "destination": "/api/working"
+      "destination": "/api/"
     }
   ],
   "env": {
@@ -24,7 +24,7 @@
     "NODE_ENV": "production"
   },
   "functions": {
-    "api/working.py": {
+    "api/index.py": {
       "runtime": "python3.9"
     }
   }
