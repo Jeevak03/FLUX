@@ -1,31 +1,40 @@
 {
   "version": 2,
   "name": "flux-multi-agent",
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/"
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
     },
     {
-      "source": "/health",
-      "destination": "/api/"
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
     },
     {
-      "source": "/chat", 
-      "destination": "/api/"
+      "src": "/health",
+      "dest": "/api/index.py"
     },
     {
-      "source": "/agents",
-      "destination": "/api/"
+      "src": "/chat",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/agents",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
     }
   ],
   "env": {
     "GROQ_API_KEY": "@groq_api_key",
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.9"
-    }
   }
 }
