@@ -342,15 +342,6 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                         <span className="text-sm font-medium text-gray-700">{messages.length} messages</span>
-                        {activeAgents.length > 0 && (
-                          <>
-                            <span className="text-gray-300">•</span>
-                            <div className="flex items-center space-x-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-sm text-green-600">{activeAgents.length} online</span>
-                            </div>
-                          </>
-                        )}
                       </div>
                       <button
                         onClick={() => window.location.reload()}
@@ -554,8 +545,6 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
                     
                     <div className="flex items-center space-x-3 text-xs text-gray-500">
                       <span>{messages.length} messages</span>
-                      <span>•</span>
-                      <span>{activeAgents.length} online</span>
                       {currentPhase && (
                         <>
                           <span>•</span>

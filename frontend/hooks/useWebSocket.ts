@@ -17,7 +17,15 @@ const BASE_DELAY = 500; // ms
 export const useWebSocket = (sessionId: string): UseWebSocketReturn => {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
-  const [activeAgents, setActiveAgents] = useState<string[]>([]);
+  const [activeAgents, setActiveAgents] = useState<string[]>([
+    'requirements_analyst',
+    'software_architect', 
+    'developer',
+    'qa_tester',
+    'devops_engineer',
+    'project_manager',
+    'security_expert'
+  ]);
   const [thinkingAgents, setThinkingAgents] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | undefined>();
   const ws = useRef<WebSocket | null>(null);
@@ -83,6 +91,16 @@ export const useWebSocket = (sessionId: string): UseWebSocketReturn => {
     ws.current.onopen = () => {
       retryRef.current = 0;
       setConnectionStatus('connected');
+      // Ensure all agents show as active/online when connected
+      setActiveAgents([
+        'requirements_analyst',
+        'software_architect', 
+        'developer',
+        'qa_tester',
+        'devops_engineer',
+        'project_manager',
+        'security_expert'
+      ]);
     };
 
     ws.current.onmessage = (event) => {
@@ -90,17 +108,46 @@ export const useWebSocket = (sessionId: string): UseWebSocketReturn => {
         const data: any = JSON.parse(event.data);
         if (data.type === 'agent_response') {
           setMessages(prev => [...prev, data]);
-          // Automatically add responding agents to activeAgents list
+          
+          // Handle agent status based on message content
           if (data.agent && data.agent !== 'system') {
-            setActiveAgents(prev => {
-              if (!prev.includes(data.agent)) {
-                return [...prev, data.agent];
-              }
-              return prev;
-            });
+            // Check if agent is leaving/stepping away
+            const message = data.message?.toLowerCase() || '';
+            const isLeavingMessage = message.includes("i'll step away") || 
+                                   message.includes("leaving the chat") || 
+                                   message.includes("signing off") ||
+                                   message.includes("catch up with you all later") ||
+                                   message.includes("i'll be offline");
+            
+            if (isLeavingMessage) {
+              // Remove agent from active list
+              setActiveAgents(prev => prev.filter(agent => agent !== data.agent));
+            } else {
+              // Add responding agents to activeAgents list
+              setActiveAgents(prev => {
+                if (!prev.includes(data.agent)) {
+                  return [...prev, data.agent];
+                }
+                return prev;
+              });
+            }
           }
         } else if (data.type === 'collaboration_update') {
           setActiveAgents(data.agents || []);
+        } else if (data.type === 'agent_status') {
+          // Handle explicit agent status updates
+          if (data.agent && data.status) {
+            if (data.status === 'offline' || data.status === 'away') {
+              setActiveAgents(prev => prev.filter(agent => agent !== data.agent));
+            } else if (data.status === 'online') {
+              setActiveAgents(prev => {
+                if (!prev.includes(data.agent)) {
+                  return [...prev, data.agent];
+                }
+                return prev;
+              });
+            }
+          }
         } else if (data.type === 'status_update') {
           if (data.status === 'connected') {
             setConnectionStatus('connected');

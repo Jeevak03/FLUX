@@ -29,37 +29,37 @@ AGENTS = {
     "sara": {
         "name": "Sara (Requirements Analyst)",
         "role": "requirements_analyst",
-        "personality": "I'm Sara, your Requirements Analyst. I help analyze and document project requirements, user stories, and specifications."
+        "personality": "I'm Sara, your Requirements Analyst. I work closely with the team to analyze and document project requirements, user stories, and specifications. I often collaborate with Marc on architecture alignment and Emma on project planning."
     },
     "marc": {
         "name": "Marc (Software Architect)", 
         "role": "software_architect",
-        "personality": "I'm Marc, your Software Architect. I design system architecture, technical specifications, and ensure scalable solutions."
+        "personality": "I'm Marc, your Software Architect. I design system architecture and technical specifications. I work closely with Sara on requirements, Alex on implementation feasibility, and Robt on security architecture."
     },
     "alex": {
         "name": "Alex (Developer)",
         "role": "developer", 
-        "personality": "I'm Alex, your Developer. I write code, implement features, and turn requirements into working software."
+        "personality": "I'm Alex, your Developer. I write code and implement features based on Marc's architecture and Sara's requirements. I collaborate with Jess on testing strategies and Dave on deployment considerations."
     },
     "jess": {
         "name": "Jess (QA Tester)",
         "role": "qa_tester",
-        "personality": "I'm Jess, your QA Tester. I test software, find bugs, and ensure quality standards are met."
+        "personality": "I'm Jess, your QA Tester. I ensure quality through comprehensive testing. I work closely with Alex on test cases, Sara on requirement validation, and Robt on security testing."
     },
     "dave": {
         "name": "Dave (DevOps Engineer)",
         "role": "devops_engineer", 
-        "personality": "I'm Dave, your DevOps Engineer. I handle deployment, infrastructure, CI/CD pipelines, and system operations."
+        "personality": "I'm Dave, your DevOps Engineer. I handle deployment, infrastructure, and CI/CD pipelines. I collaborate with Alex on deployment strategies, Marc on infrastructure requirements, and Robt on security measures."
     },
     "emma": {
         "name": "Emma (Project Manager)",
         "role": "project_manager",
-        "personality": "I'm Emma, your Project Manager. I coordinate teams, manage timelines, and ensure projects stay on track."
+        "personality": "I'm Emma, your Project Manager. I coordinate the entire team, manage timelines, and ensure smooth collaboration between Sara, Marc, Alex, Jess, Dave, and Robt. I facilitate team meetings and track progress."
     },
     "robt": {
         "name": "Robt (Security Expert)",
         "role": "security_expert",
-        "personality": "I'm Robt, your Security Expert. I assess security risks, implement security measures, ensure applications are secure."
+        "personality": "I'm Robt, your Security Expert. I assess security risks and implement protective measures. I work with Marc on secure architecture, Alex on secure coding practices, and Dave on infrastructure security."
     }
 }
 
@@ -79,13 +79,26 @@ app.add_middleware(
 
 def detect_target_agents(message: str) -> list:
     """
-    Detect which agents are being called directly.
-    Simple string matching - no complex regex or state management.
+    Detect which agents are being called directly or if collaboration is needed.
+    Enhanced with multi-agent collaboration support.
     """
     message_lower = message.lower()
     called_agents = []
     
     print(f"[ROUTE] 🔍 Analyzing message: '{message}'")
+    
+    # Check for collaboration keywords
+    collaboration_keywords = [
+        "everyone", "all agents", "team", "collaborate", "work together",
+        "call your team", "team members", "all of you", "everybody",
+        "discuss", "brainstorm", "meeting", "huddle"
+    ]
+    
+    is_collaboration_request = any(keyword in message_lower for keyword in collaboration_keywords)
+    
+    if is_collaboration_request:
+        print(f"[COLLAB] 🤝 Collaboration request detected - involving all agents")
+        return list(AGENTS.keys())  # Return all agents for collaboration
     
     # Check for direct agent calls
     for agent_key, agent_info in AGENTS.items():
@@ -98,29 +111,82 @@ def detect_target_agents(message: str) -> list:
         called_agents.append("robt")
         print(f"[ROUTE] ✅ ALIAS: 'rob' → Robt (Security Expert)")
     
-    # If no specific agents called, don't default to anyone
+    # If no specific agents called and no collaboration, use intelligent routing
     if not called_agents:
-        print(f"[ROUTE] ⚠️ No direct agent name detected - ending workflow")
+        called_agents = determine_relevant_agents(message_lower)
+        if called_agents:
+            print(f"[ROUTE] 🧠 INTELLIGENT: Auto-selected agents: {', '.join(called_agents)}")
+        else:
+            print(f"[ROUTE] ⚠️ No agents determined - ending workflow")
     
     return called_agents
 
-async def generate_agent_response(agent_key: str, message: str, context: dict = None) -> str:
-    """Generate response from specific agent using Groq"""
+def determine_relevant_agents(message: str) -> list:
+    """
+    Intelligently determine which agents should handle the request based on content.
+    """
+    # Keywords that indicate which agents should be involved
+    agent_keywords = {
+        "sara": ["requirements", "specification", "user story", "analyze", "document", "scope", "gather"],
+        "marc": ["architecture", "design", "system", "technical", "scalability", "structure", "framework"],
+        "alex": ["code", "implement", "develop", "programming", "bug", "feature", "coding", "build"],
+        "jess": ["test", "testing", "quality", "bug", "validation", "verify", "qa", "check"],
+        "dave": ["deploy", "deployment", "infrastructure", "server", "devops", "pipeline", "production"],
+        "emma": ["project", "manage", "timeline", "coordination", "planning", "schedule", "milestone"],
+        "robt": ["security", "secure", "vulnerability", "protect", "authentication", "authorization", "risk"]
+    }
+    
+    relevant_agents = []
+    
+    for agent_key, keywords in agent_keywords.items():
+        if any(keyword in message for keyword in keywords):
+            relevant_agents.append(agent_key)
+    
+    # If it's a complex request, involve multiple key agents
+    complex_indicators = ["project", "system", "application", "solution", "problem", "issue"]
+    if any(indicator in message for indicator in complex_indicators) and len(relevant_agents) < 2:
+        # For complex requests, ensure we have key roles
+        base_team = ["sara", "marc", "alex"]  # Requirements, Architecture, Development
+        for agent in base_team:
+            if agent not in relevant_agents:
+                relevant_agents.append(agent)
+    
+    return relevant_agents
+
+async def generate_agent_response(agent_key: str, message: str, context: dict = None, collaborating_agents: list = None, is_followup: bool = False) -> str:
+    """Generate response from specific agent using Groq with team awareness"""
     try:
         agent = AGENTS[agent_key]
         print(f"[AGENT] 💭 {agent['name']} generating response...")
         
-        # Create system prompt for the agent
+        # Build team context
+        team_info = get_team_context(agent_key, collaborating_agents)
+        collaboration_context = ""
+        
+        if collaborating_agents and len(collaborating_agents) > 1:
+            other_agents = [AGENTS[ak]["name"] for ak in collaborating_agents if ak != agent_key]
+            if other_agents:
+                collaboration_context = f"\n\nTEAM COLLABORATION CONTEXT:\n- You are working with: {', '.join(other_agents)}\n- This is a collaborative response where multiple team members are contributing\n- Acknowledge your teammates and build upon their expertise\n- You can suggest involving other team members if needed for specific tasks"
+        
+        if is_followup:
+            collaboration_context += "\n- This is a follow-up response after initial collaboration"
+        
+        # Create enhanced system prompt with team awareness
         system_prompt = f"""You are {agent['name']}, a {agent['role']} in a software development team.
 
 {agent['personality']}
 
+TEAM MEMBERS YOU WORK WITH:
+{team_info}
+
 Instructions:
 - Respond as {agent['name']} in character
-- Keep responses concise but helpful
+- Keep responses concise but helpful  
 - Focus on your area of expertise
-- Be collaborative and professional
-- Don't mention other agents unless directly relevant"""
+- Be collaborative and acknowledge your team members
+- When appropriate, suggest involving other team members: "I recommend we get [Name] involved for [specific task]"
+- If asked about the team, mention your colleagues and their roles
+- Work collaboratively - build on others' ideas and expertise{collaboration_context}"""
 
         # Generate response using Groq
         response = groq_client.chat.completions.create(
@@ -135,11 +201,67 @@ Instructions:
         
         agent_response = response.choices[0].message.content
         print(f"[AGENT] ✅ {agent['name']} response generated: {len(agent_response)} chars")
+        
+        # Check if agent wants to involve other team members
+        additional_agents = extract_agent_mentions(agent_response, agent_key)
+        if additional_agents:
+            print(f"[COLLAB] 🔗 {agent['name']} mentioned: {', '.join([AGENTS[a]['name'] for a in additional_agents])}")
+            return agent_response, additional_agents
+        
         return agent_response
         
     except Exception as e:
         print(f"[AGENT] ❌ Error generating response for {agent_key}: {e}")
         return f"Sorry, I'm having trouble responding right now. Error: {e}"
+
+def get_team_context(current_agent: str, collaborating_agents: list = None) -> str:
+    """Generate team context information for the agent"""
+    team_members = []
+    
+    for agent_key, agent_info in AGENTS.items():
+        if agent_key != current_agent:
+            role_desc = {
+                "sara": "handles requirements gathering and user story analysis",
+                "marc": "designs system architecture and technical specifications", 
+                "alex": "implements features and writes code",
+                "jess": "ensures quality through testing and validation",
+                "dave": "manages deployment and infrastructure operations",
+                "emma": "coordinates project timelines and team management",
+                "robt": "oversees security measures and risk assessment"
+            }
+            
+            status = "👥 ACTIVE" if collaborating_agents and agent_key in collaborating_agents else "📋 AVAILABLE"
+            team_members.append(f"- {agent_info['name']} ({status}): {role_desc.get(agent_key, agent_info['role'])}")
+    
+    return "\n".join(team_members)
+
+def extract_agent_mentions(response: str, current_agent: str) -> list:
+    """Extract mentions of other agents from a response"""
+    mentioned_agents = []
+    response_lower = response.lower()
+    
+    # Look for phrases that suggest involving other agents
+    for agent_key, agent_info in AGENTS.items():
+        if agent_key != current_agent:
+            agent_name = agent_info["name"].lower()
+            first_name = agent_name.split()[0]  # Extract first name
+            
+            # Check for direct mentions or role-based suggestions
+            mention_patterns = [
+                f"get {first_name}",
+                f"involve {first_name}",
+                f"ask {first_name}",
+                f"work with {first_name}",
+                f"bring in {first_name}",
+                f"{first_name} should",
+                f"{first_name} can help",
+                f"recommend {first_name}"
+            ]
+            
+            if any(pattern in response_lower for pattern in mention_patterns):
+                mentioned_agents.append(agent_key)
+    
+    return mentioned_agents
 
 async def send_websocket_message(websocket: WebSocket, message_type: str, data: dict):
     """Send message via WebSocket"""
@@ -235,19 +357,52 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     continue
                 
                 # Generate responses from detected agents
+                is_collaboration = len(target_agents) > 1
                 print(f"[WS] 🎯 Generating responses from: {target_agents}")
+                if is_collaboration:
+                    print(f"[COLLAB] 🤝 Multi-agent collaboration mode activated")
+                
+                additional_agents_to_call = []
                 
                 for agent_key in target_agents:
                     try:
-                        response = await generate_agent_response(agent_key, user_message)
+                        result = await generate_agent_response(
+                            agent_key, 
+                            user_message, 
+                            collaborating_agents=target_agents,
+                            is_followup=False
+                        )
+                        
+                        # Handle both single response and response with additional agents
+                        if isinstance(result, tuple):
+                            response, mentioned_agents = result
+                            additional_agents_to_call.extend(mentioned_agents)
+                        else:
+                            response = result
+                        
                         agent_name = AGENTS[agent_key]["name"]
                         
                         # Send agent response
                         await send_websocket_message(websocket, "agent_response", {
-                            "agent": agent_name,
+                            "agent": agent_key,  # Use agent_key instead of agent_name for consistency
                             "message": response,
-                            "status": "success"
+                            "status": "success",
+                            "collaboration": is_collaboration
                         })
+                        
+                        # Check if agent is leaving based on response content
+                        response_lower = response.lower()
+                        leaving_keywords = ["i'll step away", "leaving the chat", "signing off", 
+                                          "catch up with you all later", "i'll be offline", 
+                                          "stepping away", "going offline"]
+                        
+                        if any(keyword in response_lower for keyword in leaving_keywords):
+                            print(f"[STATUS] 👋 {agent_name} is going offline")
+                            await send_websocket_message(websocket, "agent_status", {
+                                "agent": agent_key,
+                                "status": "offline",
+                                "message": f"{agent_name} has gone offline"
+                            })
                         
                         print(f"[WS] ✅ Sent response from {agent_name}")
                         
@@ -258,6 +413,59 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                             "message": f"Sorry, I'm having trouble responding: {agent_error}",
                             "status": "error"
                         })
+                
+                # Handle agent-to-agent collaboration
+                if additional_agents_to_call:
+                    additional_agents_to_call = list(set(additional_agents_to_call))  # Remove duplicates
+                    additional_agents_to_call = [a for a in additional_agents_to_call if a not in target_agents]  # Don't repeat
+                    
+                    if additional_agents_to_call:
+                        print(f"[COLLAB] 🔗 Following up with mentioned agents: {', '.join([AGENTS[a]['name'] for a in additional_agents_to_call])}")
+                        
+                        followup_message = f"Following up on the previous discussion: {user_message}"
+                        for agent_key in additional_agents_to_call:
+                            try:
+                                all_involved = target_agents + additional_agents_to_call
+                                response = await generate_agent_response(
+                                    agent_key,
+                                    followup_message,
+                                    collaborating_agents=all_involved,
+                                    is_followup=True
+                                )
+                                
+                                if isinstance(response, tuple):
+                                    response = response[0]  # Just get the response text
+                                
+                                agent_name = AGENTS[agent_key]["name"]
+                                
+                                await send_websocket_message(websocket, "agent_response", {
+                                    "agent": agent_key,  # Use agent_key for consistency
+                                    "message": response,
+                                    "status": "success",
+                                    "collaboration": True,
+                                    "followup": True
+                                })
+                                
+                                # Check if follow-up agent is leaving based on response content
+                                response_lower = response.lower()
+                                leaving_keywords = ["i'll step away", "leaving the chat", "signing off", 
+                                                  "catch up with you all later", "i'll be offline", 
+                                                  "stepping away", "going offline"]
+                                
+                                if any(keyword in response_lower for keyword in leaving_keywords):
+                                    print(f"[STATUS] 👋 {agent_name} is going offline (follow-up)")
+                                    await send_websocket_message(websocket, "agent_status", {
+                                        "agent": agent_key,
+                                        "status": "offline",
+                                        "message": f"{agent_name} has gone offline"
+                                    })
+                                
+                                print(f"[COLLAB] ✅ Sent follow-up from {agent_name}")
+                                
+                            except Exception as agent_error:
+                                print(f"[COLLAB] ❌ Error with follow-up agent {agent_key}: {agent_error}")
+                        
+                        target_agents.extend(additional_agents_to_call)
                 
                 # Send completion status
                 await send_websocket_message(websocket, "status", {
