@@ -27,6 +27,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'documents' | 'expertise' | 'workflow' | 'github' | 'history'>('chat');
   const [currentPhase, setCurrentPhase] = useState<string>('requirements');
+
   const [projectContext, setProjectContext] = useState({
     name: 'New Project',
     technology: 'Web Application',
@@ -37,6 +38,47 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Helper function to get agent display names
+  const getAgentDisplayName = (agentId: string): string => {
+    const names: { [key: string]: string } = {
+      'requirements_analyst': 'Sara',
+      'software_architect': 'Marc',
+      'developer': 'Alex',
+      'qa_tester': 'Jess',
+      'devops_engineer': 'Dave',
+      'project_manager': 'Emma',
+      'security_expert': 'Robt'
+    };
+    return names[agentId] || agentId;
+  };
+
+  // Detect if user is making a direct call to an agent
+  const detectDirectCall = (message: string): string | null => {
+    const lowerMsg = message.toLowerCase().trim();
+    const directPatterns = [
+      /^(hi|hello|hey|greetings)\s+(sara|marc|alex|jess|dave|emma|robt)/i,
+      /^@?(sara|marc|alex|jess|dave|emma|robt)\b/i
+    ];
+    
+    for (const pattern of directPatterns) {
+      const match = lowerMsg.match(pattern);
+      if (match) {
+        const name = match[match.length - 1].toLowerCase();
+        const agentMap: { [key: string]: string } = {
+          'sara': 'requirements_analyst',
+          'marc': 'software_architect',
+          'alex': 'developer',
+          'jess': 'qa_tester',
+          'dave': 'devops_engineer',
+          'emma': 'project_manager',
+          'robt': 'security_expert'
+        };
+        return agentMap[name] || null;
+      }
+    }
+    return null;
+  };
 
   // Handle message sending
   const handleSendMessage = async () => {
@@ -92,35 +134,39 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   // Connection status indicator
   const getConnectionStatusColor = () => {
     switch (connectionStatus) {
-      case 'connected': return 'text-green-700 bg-green-50 border-green-200';
-      case 'connecting': return 'text-yellow-700 bg-yellow-50 border-yellow-200';
-      case 'error': return 'text-red-700 bg-red-50 border-red-200';
-      default: return 'text-gray-700 bg-gray-50 border-gray-200';
+      case 'connected': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+      case 'connecting': return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+      case 'error': return 'bg-red-500/10 text-red-400 border-red-500/30';
+      default: return 'bg-slate-700/50 text-slate-400 border-slate-600/50';
     }
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 ${className}`}>
+    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 ${className}`}>
       <div className="max-w-full mx-auto">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
+        <div className="bg-slate-900/95 backdrop-blur-xl shadow-2xl border-b border-slate-700/50 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between py-4">
-              <div className="flex items-center space-x-3">
-                <img src="/flux-logo.svg" alt="FLUX" className="w-10 h-10" />
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 rounded-xl flex items-center justify-center border border-cyan-400/30 shadow-lg">
+                  <svg className="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">FLUX</h1>
-                  <p className="text-sm text-gray-600 mt-1">Where Agents Meet Agile</p>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">FLUX</h1>
+                  <p className="text-sm text-slate-400 mt-1 font-medium">Where Agents Meet Agile</p>
                 </div>
               </div>
               
               {/* Connection Status */}
               <div className="flex items-center space-x-3">
-                <div className={`flex items-center space-x-2 px-4 py-2 rounded-full border backdrop-blur-sm ${getConnectionStatusColor()}`}>
-                  <div className={`w-2 h-2 rounded-full ${
-                    connectionStatus === 'connected' ? 'bg-green-500 animate-pulse shadow-sm shadow-green-400' :
-                    connectionStatus === 'connecting' ? 'bg-yellow-500 animate-spin shadow-sm shadow-yellow-400' :
-                    connectionStatus === 'error' ? 'bg-red-500 shadow-sm shadow-red-400' : 'bg-gray-500'
+                <div className={`flex items-center space-x-3 px-4 py-2 rounded-xl border backdrop-blur-sm ${getConnectionStatusColor()}`}>
+                  <div className={`w-3 h-3 rounded-full ${
+                    connectionStatus === 'connected' ? 'bg-emerald-400 animate-pulse shadow-lg shadow-emerald-400/50' :
+                    connectionStatus === 'connecting' ? 'bg-amber-400 animate-spin shadow-lg shadow-amber-400/50' :
+                    connectionStatus === 'error' ? 'bg-red-400 shadow-lg shadow-red-400/50' : 'bg-slate-500'
                   }`}></div>
                   <span className="text-sm font-medium capitalize">{connectionStatus}</span>
                 </div>
@@ -128,7 +174,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
                 {connectionStatus !== 'connected' && (
                   <button
                     onClick={reconnect}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm rounded-xl hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 border border-cyan-500/30"
                   >
                     Reconnect
                   </button>
@@ -136,20 +182,20 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
               </div>
             </div>
 
-            {/* Feature Navigation Tabs */}
-            <div className="border-t border-gray-200/50 pt-4 pb-4">
-              <div className="flex space-x-2 bg-white/60 backdrop-blur-sm p-2 rounded-xl max-w-fit shadow-lg border border-white/50">
+            {/* Navigation Tabs */}
+            <div className="border-t border-slate-700/50 pt-4 pb-4">
+              <div className="flex space-x-2 bg-slate-800/60 backdrop-blur-sm p-2 rounded-xl max-w-fit shadow-lg border border-slate-700/50">
                 <button
                   onClick={() => setActiveTab('chat')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                     activeTab === 'chat'
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transform scale-105'
-                      : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 transform scale-105 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 border border-transparent hover:border-slate-600/50'
                   }`}
                 >
                   💬 Chat
                   {messages.length > 0 && (
-                    <span className="ml-2 bg-white text-indigo-600 text-xs rounded-full h-5 w-5 flex items-center justify-center inline-flex font-semibold shadow-sm">
+                    <span className="ml-2 bg-slate-800/80 text-cyan-400 text-xs rounded-full h-5 w-5 flex items-center justify-center inline-flex font-semibold shadow-sm border border-cyan-500/30">
                       {messages.length}
                     </span>
                   )}
@@ -157,15 +203,15 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
                 
                 <button
                   onClick={() => setActiveTab('documents')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                     activeTab === 'documents'
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transform scale-105'
-                      : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50'
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30 transform scale-105 border border-emerald-500/30'
+                      : 'text-slate-400 hover:text-emerald-400 hover:bg-slate-700/50 border border-transparent hover:border-slate-600/50'
                   }`}
                 >
                   📎 Documents
                   {uploadedFiles.length > 0 && (
-                    <span className="ml-2 bg-white text-indigo-600 text-xs rounded-full h-5 w-5 flex items-center justify-center inline-flex font-semibold shadow-sm">
+                    <span className="ml-2 bg-slate-800/80 text-emerald-400 text-xs rounded-full h-5 w-5 flex items-center justify-center inline-flex font-semibold shadow-sm border border-emerald-500/30">
                       {uploadedFiles.length}
                     </span>
                   )}
@@ -173,15 +219,15 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
                 
                 <button
                   onClick={() => setActiveTab('expertise')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                     activeTab === 'expertise'
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transform scale-105'
-                      : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50'
+                      ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg shadow-purple-500/30 transform scale-105 border border-purple-500/30'
+                      : 'text-slate-400 hover:text-purple-400 hover:bg-slate-700/50 border border-transparent hover:border-slate-600/50'
                   }`}
                 >
                   👥 Team
                   {activeAgents.length > 0 && (
-                    <span className="ml-2 bg-white text-indigo-600 text-xs rounded-full h-5 w-5 flex items-center justify-center inline-flex font-semibold shadow-sm">
+                    <span className="ml-2 bg-slate-800/80 text-purple-400 text-xs rounded-full h-5 w-5 flex items-center justify-center inline-flex font-semibold shadow-sm border border-purple-500/30">
                       {activeAgents.length}
                     </span>
                   )}
@@ -189,10 +235,10 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
                 
                 <button
                   onClick={() => setActiveTab('workflow')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                     activeTab === 'workflow'
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transform scale-105'
-                      : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50'
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30 transform scale-105 border border-amber-500/30'
+                      : 'text-slate-400 hover:text-amber-400 hover:bg-slate-700/50 border border-transparent hover:border-slate-600/50'
                   }`}
                 >
                   📊 Workflow
@@ -200,21 +246,21 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
 
                 <button
                   onClick={() => setActiveTab('github')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                     activeTab === 'github'
-                      ? 'bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-lg shadow-gray-800/30 transform scale-105'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50/50'
+                      ? 'bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-lg shadow-slate-700/30 transform scale-105 border border-slate-600/50'
+                      : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50 border border-transparent hover:border-slate-600/50'
                   }`}
                 >
-                  � GitHub
+                  🐙 GitHub
                 </button>
                 
                 <button
                   onClick={() => setActiveTab('history')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                     activeTab === 'history'
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30 transform scale-105'
-                      : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50'
+                      ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-lg shadow-rose-500/30 transform scale-105 border border-rose-500/30'
+                      : 'text-slate-400 hover:text-rose-400 hover:bg-slate-700/50 border border-transparent hover:border-slate-600/50'
                   }`}
                 >
                   🔍 History
@@ -226,302 +272,380 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Tab Content */}
-          <div className="min-h-screen">
-            {/* Chat Tab */}
-            {activeTab === 'chat' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-180px)]">
-                {/* Left Sidebar - Agent Selection & Context */}
-                <div className="lg:col-span-3 space-y-4">
-                  {/* Agent Selector */}
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300">
-                    <AgentSelector
-                      agents={[
-                        { id: 'requirements_analyst', name: 'Sara', role: 'Requirements Analyst', expertise: [] },
-                        { id: 'software_architect', name: 'Marc', role: 'Software Architect', expertise: [] },
-                        { id: 'developer', name: 'Alex', role: 'Senior Developer', expertise: [] },
-                        { id: 'qa_tester', name: 'Jess', role: 'QA Engineer', expertise: [] },
-                        { id: 'devops_engineer', name: 'Dave', role: 'DevOps Engineer', expertise: [] },
-                        { id: 'project_manager', name: 'Emma', role: 'Project Manager', expertise: [] },
-                        { id: 'security_expert', name: 'Robt', role: 'Security Expert', expertise: [] }
-                      ]}
-                      activeAgents={activeAgents}
-                      selectedAgents={selectedAgents}
-                      onAgentToggle={(agentId) => {
-                        setSelectedAgents(prev =>
-                          prev.includes(agentId)
-                            ? prev.filter(id => id !== agentId)
-                            : [...prev, agentId]
-                        );
-                      }}
-                    />
+          {/* Chat Tab - GitHub Copilot Style Layout */}
+          {activeTab === 'chat' && (
+            <div className="max-w-4xl mx-auto">
+              {/* Team Selection Panel */}
+              <div className="mb-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <h3 className="text-sm font-semibold text-gray-800">Select Team Members</h3>
+                    </div>
+                    <span className="text-sm text-gray-500">{selectedAgents.length} selected</span>
                   </div>
-
-                  {/* Project Context Panel */}
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300">
-                    <ProjectContextPanel
-                      projectInfo={projectContext}
-                      messages={messages}
-                      activeAgents={activeAgents}
-                      onUpdateProject={(updates) => {
-                        setProjectContext(prev => ({ ...prev, ...updates }));
-                        if (updates.phase) setCurrentPhase(updates.phase);
-                      }}
-                    />
+                  
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {[
+                      { id: 'requirements_analyst', name: 'Sara', role: 'Requirements Analyst', color: 'border-purple-200 bg-purple-50 text-purple-700' },
+                      { id: 'software_architect', name: 'Marc', role: 'Software Architect', color: 'border-blue-200 bg-blue-50 text-blue-700' },
+                      { id: 'developer', name: 'Alex', role: 'Senior Developer', color: 'border-green-200 bg-green-50 text-green-700' },
+                      { id: 'qa_tester', name: 'Jess', role: 'QA Engineer', color: 'border-yellow-200 bg-yellow-50 text-yellow-700' },
+                      { id: 'devops_engineer', name: 'Dave', role: 'DevOps Engineer', color: 'border-red-200 bg-red-50 text-red-700' },
+                      { id: 'project_manager', name: 'Emma', role: 'Project Manager', color: 'border-indigo-200 bg-indigo-50 text-indigo-700' },
+                      { id: 'security_expert', name: 'Robt', role: 'Security Expert', color: 'border-gray-200 bg-gray-50 text-gray-700' }
+                    ].map(agent => (
+                      <button
+                        key={agent.id}
+                        onClick={() => {
+                          setSelectedAgents(prev =>
+                            prev.includes(agent.id)
+                              ? prev.filter(id => id !== agent.id)
+                              : [...prev, agent.id]
+                          );
+                        }}
+                        className={`p-3 rounded-lg border-2 transition-all duration-200 text-left hover:shadow-sm ${
+                          selectedAgents.includes(agent.id)
+                            ? `${agent.color} border-opacity-100 shadow-sm`
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 mb-1">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            selectedAgents.includes(agent.id) ? 'bg-white/80' : 'bg-gray-100'
+                          }`}>
+                            {agent.name[0]}
+                          </div>
+                          <div className={`w-2 h-2 rounded-full ${
+                            activeAgents.includes(agent.id) ? 'bg-green-500' : 'bg-gray-300'
+                          }`}></div>
+                        </div>
+                        <div className="text-xs font-medium">{agent.name}</div>
+                        <div className="text-xs opacity-70 truncate">{agent.role}</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
+              </div>
 
-                {/* Main Content - Chat Interface */}
-                <div className="lg:col-span-6 flex flex-col space-y-4 h-full">
-                  {/* Chat Input */}
-                  <div className="bg-gradient-to-br from-white/95 via-white/90 to-indigo-50/50 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 hover:shadow-2xl transition-all duration-300">
-                    <div className="p-4 border-b border-gray-100/50 bg-gradient-to-r from-transparent to-indigo-50/30">
-                      <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">Chat with SDLC Team</h3>
-                      <p className="text-sm text-gray-600">Ask questions, request analysis, or get project guidance</p>
-                    </div>
-                    
-                    <div className="p-4 space-y-4">
-                      {/* Message Input */}
-                      <div className="relative">
-                        <textarea
-                          ref={textareaRef}
-                          value={currentMessage}
-                          onChange={handleTextareaChange}
-                          onKeyPress={handleKeyPress}
-                          placeholder="Describe your project needs, ask questions, or request specific analysis..."
-                          className="w-full p-4 border border-indigo-200/50 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none transition-all duration-300 bg-white/80 backdrop-blur-sm hover:bg-white/90 focus:bg-white"
-                          style={{ minHeight: '80px', maxHeight: '200px' }}
-                        />
-                        
-                        {/* Character count */}
-                        <div className="absolute bottom-3 right-3 text-xs text-gray-400 bg-white px-2 py-1 rounded">
-                          {currentMessage.length}/2000
-                        </div>
+              {/* Claude-Style Conversation Area */}
+              <div className="mb-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-96 flex flex-col">
+                  {/* Simple Header */}
+                  <div className="px-6 py-3 border-b border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <span className="text-sm font-medium text-gray-700">{messages.length} messages</span>
+                        {activeAgents.length > 0 && (
+                          <>
+                            <span className="text-gray-300">•</span>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-sm text-green-600">{activeAgents.length} online</span>
+                            </div>
+                          </>
+                        )}
                       </div>
-
-                      {/* Selected Agents & Upload Status */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          {selectedAgents.length > 0 && (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-600 font-medium">To:</span>
-                              <div className="flex flex-wrap gap-1">
-                                {selectedAgents.map(agentId => (
-                                  <span
-                                    key={agentId}
-                                    className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium"
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Clear conversation"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Messages Area - Claude Style */}
+                  <div className="flex-1 overflow-y-auto">
+                    {messages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                        <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <p className="text-lg font-medium text-gray-400">No messages yet</p>
+                        <p className="text-sm text-gray-400">Start a conversation with the SDLC team</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-0">
+                        {messages.map((message, index) => {
+                          const isUser = message.agent === 'user';
+                          const agentNames: { [key: string]: string } = {
+                            'requirements_analyst': 'Sara',
+                            'software_architect': 'Marc',
+                            'developer': 'Alex',
+                            'qa_tester': 'Jess',
+                            'devops_engineer': 'Dave',
+                            'project_manager': 'Emma',
+                            'security_expert': 'Robt'
+                          };
+                          const displayName = agentNames[message.agent] || message.agent;
+                          
+                          return (
+                            <div 
+                              key={`${message.timestamp}-${index}`} 
+                              className={`px-6 py-4 ${isUser ? 'bg-blue-50/50' : 'bg-white'} ${index > 0 ? 'border-t border-gray-100' : ''} hover:bg-gray-50/50 transition-colors group`}
+                            >
+                              <div className="flex space-x-3">
+                                {/* Avatar */}
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                  isUser 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white'
+                                }`}>
+                                  {isUser ? 'You' : displayName[0]}
+                                </div>
+                                
+                                {/* Message Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {isUser ? 'You' : displayName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    {!isUser && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {message.agent.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                                    {message.message}
+                                  </div>
+                                  
+                                  {/* Copy Button */}
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(message.message)}
+                                    className="mt-2 opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-gray-600 transition-all duration-200 flex items-center space-x-1"
                                   >
-                                    {agentId.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                  </span>
-                                ))}
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>Copy</span>
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          )}
-                          
-                          {uploadedFiles.length > 0 && (
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                              <span>📎</span>
-                              <span className="font-medium">{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''}</span>
-                            </div>
-                          )}
-                        </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-                        {/* Send Button */}
-                        <button
-                          onClick={handleSendMessage}
-                          disabled={!currentMessage.trim() && uploadedFiles.length === 0}
-                          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+              {/* Message Input - Claude Style */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                {/* Selected Recipients Bar */}
+                {selectedAgents.length > 0 && (
+                  <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="text-xs text-gray-500 font-medium">Messaging:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedAgents.map(agentId => (
+                        <span
+                          key={agentId}
+                          className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded-md font-medium"
                         >
-                          <span>Send</span>
-                          <span className="ml-2">✨</span>
-                        </button>
+                          {getAgentDisplayName(agentId)}
+                          <button
+                            onClick={() => setSelectedAgents(prev => prev.filter(id => id !== agentId))}
+                            className="ml-1 text-blue-500/60 hover:text-blue-500 transition-colors"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Main Input Area */}
+                <div className="p-4">
+                  {/* Upload Status */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        </svg>
+                        <span className="text-sm text-blue-700 font-medium">{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} attached</span>
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Response Preview Panel */}
-                  <div className="flex-1 min-h-0">
-                    <div className="bg-gradient-to-br from-white/95 via-white/90 to-purple-50/30 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 h-full hover:shadow-2xl transition-all duration-300">
-                      <ResponsePreviewPanel
-                        messages={messages}
-                        className="h-full"
-                        onCopyResponse={(content) => {
-                          navigator.clipboard.writeText(content);
-                        }}
-                        onRegenerateResponse={(messageId: any) => {
-                          console.log('Regenerate:', messageId);
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Sidebar - Quick Actions */}
-                <div className="lg:col-span-3 space-y-4">
-                  {/* Quick Action Buttons */}
-                  <QuickActionButtons
-                    currentPhase={currentPhase}
-                    onActionClick={(action) => {
-                      setCurrentMessage(action.template);
-                      setSelectedAgents(action.suggestedAgents);
-                      textareaRef.current?.focus();
-                    }}
-                  />
-
-                  {/* Additional Features Panel */}
-                  <div className="bg-gradient-to-br from-white/95 via-white/90 to-indigo-50/50 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-all duration-300">
-                    <div className="text-center">
-                      <div className="text-4xl mb-4">🎯</div>
-                      <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">More Features</h3>
-                      <p className="text-gray-600 text-sm mb-4">
-                        Explore additional tools and insights
-                      </p>
-                      <div className="space-y-3">
-                        <button
-                          onClick={() => setActiveTab('documents')}
-                          className="w-full flex items-center justify-center space-x-2 p-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-                        >
-                          <span>📎</span>
-                          <span>Upload Documents</span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('expertise')}
-                          className="w-full flex items-center justify-center space-x-2 p-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
-                        >
-                          <span>👥</span>
-                          <span>Team Expertise</span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('workflow')}
-                          className="w-full flex items-center justify-center space-x-2 p-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
-                        >
-                          <span>📊</span>
-                          <span>View Workflow</span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('history')}
-                          className="w-full flex items-center justify-center space-x-2 p-3 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium"
-                        >
-                          <span>🔍</span>
-                          <span>Message History</span>
-                        </button>
-                      </div>
+                  {/* Message Input - Claude Style */}
+                  <div className="relative">
+                    <textarea
+                      ref={textareaRef}
+                      value={currentMessage}
+                      onChange={handleTextareaChange}
+                      onKeyPress={handleKeyPress}
+                      placeholder={selectedAgents.length > 0 
+                        ? `Message ${selectedAgents.map(getAgentDisplayName).join(', ')}...`
+                        : "Ask a question, start a discussion, or request help from the SDLC team..."
+                      }
+                      className="w-full p-4 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200 bg-white hover:border-gray-400 placeholder-gray-400 text-gray-900"
+                      style={{ minHeight: '60px', maxHeight: '200px' }}
+                    />
+                    
+                    {/* Send Button */}
+                    <div className="absolute right-3 bottom-3 flex items-center space-x-2">
+                      {currentMessage.length > 0 && (
+                        <span className="text-xs text-gray-400">{currentMessage.length}/2000</span>
+                      )}
+                      <button
+                        onClick={handleSendMessage}
+                        disabled={!currentMessage.trim() && uploadedFiles.length === 0}
+                        className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 transition-colors"
+                        title="Send message"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Connection & Stats Panel */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div className="text-center">
-                      <div className="text-2xl mb-3">📊</div>
-                      <h4 className="font-semibold text-gray-900 mb-3">Session Stats</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <div className="text-2xl font-bold text-blue-600">{messages.length}</div>
-                          <div className="text-gray-600">Messages</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-green-600">{activeAgents.length}</div>
-                          <div className="text-gray-600">Active Agents</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-purple-600">{uploadedFiles.length}</div>
-                          <div className="text-gray-600">Files</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-orange-600">{selectedAgents.length}</div>
-                          <div className="text-gray-600">Selected</div>
-                        </div>
-                      </div>
+                  {/* Quick Actions Bar */}
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setActiveTab('documents')}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-blue-600 bg-gray-100 hover:bg-blue-50 rounded-md border border-gray-200 hover:border-blue-200 transition-all duration-200"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        </svg>
+                        Attach
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('workflow')}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-blue-600 bg-gray-100 hover:bg-blue-50 rounded-md border border-gray-200 hover:border-blue-200 transition-all duration-200"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Workflow
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('history')}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-blue-600 bg-gray-100 hover:bg-blue-50 rounded-md border border-gray-200 hover:border-blue-200 transition-all duration-200"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        History
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 text-xs text-gray-500">
+                      <span>{messages.length} messages</span>
+                      <span>•</span>
+                      <span>{activeAgents.length} online</span>
+                      {currentPhase && (
+                        <>
+                          <span>•</span>
+                          <span className="capitalize">{currentPhase.replace('_', ' ')}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Documents Tab */}
-            {activeTab === 'documents' && (
-              <div className="max-w-4xl mx-auto">
-                <div className="bg-gradient-to-br from-white/95 via-white/90 to-blue-50/50 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-300">
-                  <DocumentUpload
-                    onFilesUploaded={setUploadedFiles}
-                    maxFiles={10}
-                    maxFileSize={30 * 1024 * 1024}
-                  />
-                </div>
+          {/* Other Tabs */}
+          {activeTab === 'documents' && (
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gradient-to-br from-slate-800/95 via-slate-700/90 to-slate-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 p-6 hover:shadow-2xl transition-all duration-300">
+                <DocumentUpload
+                  onFilesUploaded={setUploadedFiles}
+                  maxFiles={10}
+                  maxFileSize={30 * 1024 * 1024}
+                />
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Team Expertise Tab */}
-            {activeTab === 'expertise' && (
-              <div className="max-w-6xl mx-auto">
-                <div className="bg-gradient-to-br from-white/95 via-white/90 to-purple-50/50 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-300">
-                  <AgentExpertiseCards
-                    messages={messages}
-                    activeAgents={activeAgents}
-                    onAgentSelect={(agentId) => {
-                      setSelectedAgents(prev =>
-                        prev.includes(agentId) ? prev : [...prev, agentId]
-                      );
-                      setActiveTab('chat'); // Switch back to chat after selecting agent
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Workflow Tab */}
-            {activeTab === 'workflow' && (
-              <div className="max-w-6xl mx-auto">
-                <div className="bg-gradient-to-br from-white/95 via-white/90 to-green-50/50 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-300">
-                  <WorkflowVisualization
-                    messages={messages}
-                    activeAgents={activeAgents}
-                    currentPhase={currentPhase}
-                    onPhaseSelect={(phase) => {
-                      setCurrentPhase(phase);
-                      // Update project context
-                    setProjectContext(prev => ({ ...prev, phase }));
-                  }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* GitHub Tab */}
-            {activeTab === 'github' && (
-              <div className="max-w-7xl mx-auto">
-                <GitHubIntegration
-                  onRepositorySelect={(repo) => {
-                    // Handle repository selection
-                    setProjectContext(prev => ({
-                      ...prev,
-                      name: repo.name,
-                      technology: repo.language || 'Unknown'
-                    }));
-                    console.log('Selected repository:', repo);
+          {activeTab === 'expertise' && (
+            <div className="max-w-6xl mx-auto">
+              <div className="bg-gradient-to-br from-slate-800/95 via-slate-700/90 to-slate-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 p-6 hover:shadow-2xl transition-all duration-300">
+                <AgentExpertiseCards
+                  messages={messages}
+                  activeAgents={activeAgents}
+                  onAgentSelect={(agentId) => {
+                    setSelectedAgents(prev =>
+                      prev.includes(agentId) ? prev : [...prev, agentId]
+                    );
+                    setActiveTab('chat');
                   }}
                 />
               </div>
-            )}
+            </div>
+          )}
 
-            {/* History Tab */}
-            {activeTab === 'history' && (
-              <div className="max-w-4xl mx-auto">
-                <div className="bg-gradient-to-br from-white/95 via-white/90 to-amber-50/50 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-300">
-                  <MessageThreading
-                    messages={messages}
+          {activeTab === 'workflow' && (
+            <div className="max-w-6xl mx-auto">
+              <div className="bg-gradient-to-br from-slate-800/95 via-slate-700/90 to-slate-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 p-6 hover:shadow-2xl transition-all duration-300">
+                <WorkflowVisualization
+                  messages={messages}
+                  activeAgents={activeAgents}
+                  currentPhase={currentPhase}
+                  onPhaseSelect={(phase) => {
+                    setCurrentPhase(phase);
+                    setProjectContext(prev => ({ ...prev, phase }));
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'github' && (
+            <div className="max-w-7xl mx-auto">
+              <GitHubIntegration
+                onRepositorySelect={(repo) => {
+                  setProjectContext(prev => ({
+                    ...prev,
+                    name: repo.name,
+                    technology: repo.language || 'Unknown'
+                  }));
+                  console.log('Selected repository:', repo);
+                }}
+              />
+            </div>
+          )}
+
+          {activeTab === 'history' && (
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gradient-to-br from-slate-800/95 via-slate-700/90 to-slate-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 p-6 hover:shadow-2xl transition-all duration-300">
+                <MessageThreading
+                  messages={messages}
                   onThreadSelect={(threadId) => {
                     console.log('Selected thread:', threadId);
-                    setActiveTab('chat'); // Switch back to chat after selecting thread
+                    setActiveTab('chat');
                   }}
                   onMessageSearch={(query) => {
                     console.log('Search query:', query);
                   }}
-                  />
-                </div>
+                />
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

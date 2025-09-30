@@ -111,8 +111,14 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
                     </h4>
                   </div>
                   
-                  <p className="text-sm text-gray-600 mb-2 capitalize">
-                    {agent.role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  <p className="text-sm text-gray-600 mb-2 font-medium leading-relaxed">
+                    {agent.role === 'requirements_analyst' && 'Requirements Analyst'}
+                    {agent.role === 'software_architect' && 'Software Architect'}
+                    {agent.role === 'developer' && 'Senior Developer'}
+                    {agent.role === 'qa_tester' && 'QA Engineer'}
+                    {agent.role === 'devops_engineer' && 'DevOps Engineer'}
+                    {agent.role === 'project_manager' && 'Project Manager'}
+                    {agent.role === 'security_expert' && 'Security Expert'}
                   </p>
                   
                   {/* Status Indicator */}

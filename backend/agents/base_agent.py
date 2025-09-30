@@ -22,6 +22,10 @@ class BaseSDLCAgent(ABC):
         pass
 
     async def process_request(self, user_input: str, context: Dict[str, Any]) -> str:
+        # Check if this is a direct call to this agent
+        is_direct_call = context.get("direct_call", False)
+        interaction_type = context.get("interaction_type", "")
+        
         # Prepare the context with uploaded files if available
         context_str = f"Context: {context}"
         
@@ -54,8 +58,13 @@ class BaseSDLCAgent(ABC):
                     context_str += f"   CONTENT: [Binary file - {file_info.get('type', 'unknown type')}]\n"
                 context_str += "---\n"
 
+        # Build system prompt with direct call context if applicable
+        system_prompt = self.get_system_prompt()
+        if is_direct_call:
+            system_prompt += f"\n\nIMPORTANT: {interaction_type} Be conversational and personable, as if speaking directly to a colleague."
+
         messages = [
-            {"role": "system", "content": self.get_system_prompt()},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"{context_str}\n\nRequest: {user_input}"}
         ]
 

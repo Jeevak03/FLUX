@@ -53,7 +53,7 @@ class GroqModelManager:
                 model=model,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=4096,
+                max_tokens=1024,  # Reduced from 4096 to avoid token limit errors
                 stream=True  # Always use streaming for better perceived performance
             )
             

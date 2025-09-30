@@ -130,7 +130,8 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     "uploaded_files": [file.dict() for file in user_request.uploaded_files],
                     "next_agent": "",
                     "final_response": "",
-                    "requested_agents": user_request.requested_agents
+                    "requested_agents": user_request.requested_agents,
+                    "called_agent": None
                 }
                 if user_request.requested_agents:
                     initial_state["current_phase"] = "collaboration"
@@ -143,6 +144,9 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 all_responses = {}  # Track all responses across state updates
                 
                 print(f"[WS] Starting workflow execution with state: {list(initial_state.keys())}")
+                print(f"[WS] 🔍 CRITICAL DEBUG: user_request = '{initial_state.get('user_request')}'")
+                print(f"[WS] 🔍 CRITICAL DEBUG: requested_agents = {initial_state.get('requested_agents')}")
+                print(f"[WS] 🔍 CRITICAL DEBUG: called_agent = {initial_state.get('called_agent')}")
                 try:
                     async for state_update in workflow.workflow.astream(initial_state):
                         current_state = state_update
