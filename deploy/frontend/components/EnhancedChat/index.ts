@@ -1,0 +1,1 @@
+export { EnhancedChatInterface } from './EnhancedChatInterface';

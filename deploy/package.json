@@ -1,0 +1,17 @@
+{
+  "name": "flux-multi-agent",
+  "version": "1.0.0",
+  "description": "FLUX Multi-Agent Collaboration System",
+  "main": "index.js",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm start",
+    "dev": "cd frontend && npm run dev"
+  },
+  "keywords": ["ai", "agents", "collaboration", "nextjs", "fastapi"],
+  "author": "FLUX Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
