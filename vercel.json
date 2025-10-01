@@ -34,7 +34,7 @@
     }
   ],
   "env": {
-    "GROQ_API_KEY": "@groq_api_key",
+    "GROQ_API_KEY": "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",
     "NODE_ENV": "production"
   }
 }
