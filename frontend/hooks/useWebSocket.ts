@@ -254,13 +254,14 @@ export const useWebSocket = (sessionId: string): UseWebSocketReturn => {
     if (ws.current?.readyState === WebSocket.OPEN) {
       try {
         ws.current.send(JSON.stringify({
-          type: 'user_message',
-          message: request,
-          context,
-          requested_agents: agents,
-          uploaded_files: uploadedFiles,
-          history: messages.slice(-10)
-        }));
+  type: 'user_message',
+  request: request,  // ✅ Correct - matches backend
+  message: request,  // Keep for compatibility
+  context,
+  requested_agents: agents,
+  uploaded_files: uploadedFiles,
+  history: messages.slice(-10)
+}));
       } catch (error) {
         console.error('WebSocket send error:', error);
         // Fallback to REST API
