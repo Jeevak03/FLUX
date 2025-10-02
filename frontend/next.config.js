@@ -4,14 +4,14 @@ const nextConfig = {
   swcMinify: true,
   
   // Environment variables for production
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NODE_ENV === 'production' 
-      ? '/api' 
-      : 'http://localhost:8000',
-    NEXT_PUBLIC_WS_URL: process.env.NODE_ENV === 'production'
-      ? `wss://${process.env.VERCEL_URL || 'localhost'}/api`
-      : 'ws://localhost:8000',
-  },
+ // env: {
+   // NEXT_PUBLIC_API_URL: process.env.NODE_ENV === 'production' 
+     // ? '/api' 
+ //     : 'http://localhost:8000',
+   // NEXT_PUBLIC_WS_URL: process.env.NODE_ENV === 'production'
+     // ? `wss://${process.env.VERCEL_URL || 'localhost'}/api`
+      //:// 'ws://localhost:8000',
+ // },
 
   // Vercel deployment configuration
   async rewrites() {
@@ -19,7 +19,7 @@ const nextConfig = {
       return [
         {
           source: '/api/:path*',
-          destination: 'http://localhost:8000/:path*',
+          destination: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000' + '/:path*',
         },
       ];
     }

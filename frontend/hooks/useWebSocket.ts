@@ -33,13 +33,18 @@ export const useWebSocket = (sessionId: string): UseWebSocketReturn => {
   const manualCloseRef = useRef(false);
 
   const buildUrl = () => {
-    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_WS_URL) {
-      return `${process.env.NEXT_PUBLIC_WS_URL}/ws/${sessionId}`;
-    }
-    return process.env.NODE_ENV === 'production'
+  let url = '';
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_WS_URL) {
+    url = `${process.env.NEXT_PUBLIC_WS_URL}/ws/${sessionId}`;
+  } else {
+    url = process.env.NODE_ENV === 'production'
       ? `wss://${window.location.host}/api/ws/${sessionId}`
       : `ws://localhost:8000/ws/${sessionId}`;
-  };
+  }
+  
+  console.log('🔍 WebSocket URL:', url); // 👈 ADD THIS DEBUG LINE
+  return url;
+};
 
   const getApiUrl = () => {
     if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {

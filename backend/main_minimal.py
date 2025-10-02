@@ -20,6 +20,7 @@ if not GROQ_API_KEY:
 try:
     from groq import Groq
     groq_client = Groq(api_key=GROQ_API_KEY)
+    print("✅ Groq client initialized")
 except ImportError:
     print("❌ ERROR: groq library not installed. Run: pip install groq")
     exit(1)
@@ -71,10 +72,14 @@ app = FastAPI(title="FLUX - Minimal Multi-Agent System")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "*",  # Allow all origins in development
+        "https://automatic-garbanzo-5gr4qj67wq9q2vg5r-3002.app.github.dev",  # Your frontend URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 def detect_target_agents(message: str) -> list:
